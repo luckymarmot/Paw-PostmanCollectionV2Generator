@@ -9921,15 +9921,16 @@ var RecordParameter = exports.RecordParameter = function (_Mock8) {
    * @constructor
    * @param {string} key: the key of an RecordParameter
    * @param {string} value: the value of an RecordParameter
+   * @param {description} value: the description of an RecordParameter 
    * @param {boolean?} enabled: whether a RecordParameter is enabled
    * @param {string} prefix: the prefix to use for the spy methods and fields
    */
-  function RecordParameter(key, value, enabled) {
+  function RecordParameter(key, value, description, enabled) {
     var prefix = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : '';
     (0, _classCallCheck3.default)(this, RecordParameter);
 
     var obj = {
-      key: key, value: value, enabled: enabled,
+      key: key, value: value, description: description, enabled: enabled,
       toString: function toString() {}
     };
 
@@ -14901,6 +14902,7 @@ methods.createBodyFromUrlEncodedMode = function (bodyParams) {
     return {
       key: param.get('key'),
       value: param.get('default') || '{{' + param.get('key') + '}}',
+      description: param.get('description'),
       enabled: true
     };
   }).valueSeq().toJS();
@@ -14919,6 +14921,7 @@ methods.createBodyFromFormDataMode = function (bodyParams) {
     return {
       key: param.get('key'),
       value: param.get('default') || '{{' + param.get('key') + '}}',
+      description: param.get('description'),
       enabled: true
     };
   }).valueSeq().toJS();
