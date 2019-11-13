@@ -40,10 +40,13 @@ class PostmanGenerator implements Paw.Generator {
   }
 
   private convertRequestGroup(pawGroup: Paw.RequestGroup): Postman.Item {
-    const children = this.convertItems(pawGroup.getChildren())
+    const pawChildren = pawGroup.getChildren().sort((a, b) => {
+      return a.order - b.order
+    })
+    const pmChildren = this.convertItems(pawChildren)
     const pmItem: Postman.Item = {
       name: pawGroup.name,
-      item: children,
+      item: pmChildren,
       protocolProfileBehavior: null,
     }
     return pmItem

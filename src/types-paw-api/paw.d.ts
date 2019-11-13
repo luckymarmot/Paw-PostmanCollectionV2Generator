@@ -79,10 +79,6 @@ declare class Context {
     user: UserInfo|null
 }
 
-declare class RequestTreeItem {
-    //
-}
-
 declare interface BasicAuth {
     username: string|DynamicString|null
     password: string|DynamicString|null
@@ -115,7 +111,7 @@ declare interface OAuth2 {
     grant_type: string|undefined
 }
 
-declare class Request extends RequestTreeItem {
+declare class Request {
     readonly id: string
     readonly parent: RequestTreeItem|null
     name: string
@@ -211,7 +207,7 @@ declare class Request extends RequestTreeItem {
     deleteRequest(): boolean
 }
 
-declare class RequestGroup extends RequestTreeItem {
+declare class RequestGroup {
     readonly id: string
     readonly parent: RequestTreeItem|null
     name: string|null
@@ -369,6 +365,7 @@ export interface Generator {
 }
 
 export type DynamicStringComponent = string | DynamicValue
+export type RequestTreeItem = Request | RequestGroup
 
 declare global {
     function registerImporter(importer: any): void
