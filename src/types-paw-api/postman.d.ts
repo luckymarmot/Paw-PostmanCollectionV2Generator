@@ -40,6 +40,11 @@ export interface Item {
     request?: Request|null
     item?: Item[]|null
     protocolProfileBehavior: ProtocolProfileBehavior|null
+    response: Response[]
+}
+
+export interface Response {
+    // not defined
 }
 
 export interface Request {

@@ -54,6 +54,7 @@ class PostmanGenerator implements Paw.Generator {
       name: pawGroup.name,
       item: pmChildren,
       protocolProfileBehavior: null,
+      response: [],
     }
     return pmItem
   }
@@ -101,6 +102,7 @@ class PostmanGenerator implements Paw.Generator {
       name: pawRequest.name,
       request: pmRequest,
       protocolProfileBehavior: pmOptions,
+      response: [],
     }
     return pmItem
   }
