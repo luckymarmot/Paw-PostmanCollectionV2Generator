@@ -28,6 +28,9 @@ const makeFileDv = (): DynamicValue => {
 }
 
 const convertEnvString = (dynamicString: DynamicString, context: Paw.Context): string => {
+  if (!dynamicString) {
+    return ''
+  }
   return dynamicString.components.map((component): string => {
     if (typeof component === 'string') {
       return component

@@ -61,13 +61,14 @@ class PostmanGenerator implements Paw.Generator {
   private convertRequest(pawRequest: Paw.Request): Postman.Item {
     const pmUrl: Postman.Url = {
       raw: convertEnvString(pawRequest.getUrl(true) as DynamicString, this.context),
-      query: null,
+      query: null, // @TODO
     }
+    const pmHeaders = convertHeaders(pawRequest, this.context)
     const pmRequest: Postman.Request = {
       method: (pawRequest.getMethod(false) as string),
       url: pmUrl,
       description: pawRequest.description,
-      header: [], // @TODO
+      header: pmHeaders,
       body: null, // @TODO
       auth: null, // @TODO
     }

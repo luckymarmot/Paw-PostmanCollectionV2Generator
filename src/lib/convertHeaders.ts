@@ -1,40 +1,35 @@
 /* eslint-disable no-param-reassign */
 import Postman from '../types-paw-api/postman'
 import Paw from '../types-paw-api/paw'
-import EnvironmentManager from './EnvironmentManager'
-import convertEnvString from './convertEnvString'
-import { makeDs, makeRequestDv } from './dynamicStringUtils'
+import { convertEnvString } from './dynamicStringUtils'
 
 
-const convertHeader = (pmHeader: Postman.Header, pawRequest: Paw.Request, environmentManager: EnvironmentManager): Paw.KeyValue => {
-  const headerName = convertEnvString((pmHeader.key || ''), environmentManager)
-  let headerValue = convertEnvString((pmHeader.value || ''), environmentManager)
-
-  // Convert to Request Variable (if there's a description)
-  if (pmHeader.description &&
-      typeof pmHeader.description === 'string' &&
-      pmHeader.description.trim() !== '') {
-    const variable = pawRequest.addVariable(headerName as string, headerValue, pmHeader.description.trim())
-    headerValue = makeDs(makeRequestDv(variable.id))
+const convertHeader = (pawHeader: Paw.KeyValue, pawRequest: Paw.Request, context: Paw.Context): Postman.Header => {
+  // find any request variable
+  let { value } = pawHeader
+  let description = null
+  const onlyDv = (value ? value.getOnlyDynamicValue() : null)
+  if (onlyDv && onlyDv.type === 'com.luckymarmot.RequestVariableDynamicValue') {
+    const requestVariableId = (onlyDv as any).variableUUID
+    const requestVariable = pawRequest.getVariableById(requestVariableId)
+    if (requestVariable) {
+      value = (requestVariable.value as DynamicString)
+      description = (requestVariable.description || null)
+    }
   }
 
-  // Add header
-  const pawHeader = pawRequest.addHeader(headerName, headerValue)
-
-  // Set disabled?
-  if (pmHeader.disabled) {
-    pawHeader.enabled = false
+  const pmHeader: Postman.Header = {
+    key: (pawHeader.name ? pawHeader.name.getEvaluatedString() : ''),
+    value: convertEnvString(value, context),
+    disabled: !pawHeader.enabled,
+    description,
   }
-
-  return pawHeader
+  return pmHeader
 }
 
-const convertHeaders = (pmRequest: Postman.Request, pawRequest: Paw.Request, environmentManager: EnvironmentManager): void => {
-  if (!pmRequest.header || !Array.isArray(pmRequest.header)) {
-    return
-  }
-  pmRequest.header.forEach((pmHeader) => {
-    convertHeader(pmHeader, pawRequest, environmentManager)
+const convertHeaders = (pawRequest: Paw.Request, context: Paw.Context): Postman.Header[] => {
+  return pawRequest.getHeadersArray().map((pawHeader) => {
+    return convertHeader(pawHeader, pawRequest, context)
   })
 }
 
