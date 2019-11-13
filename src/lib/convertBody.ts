@@ -4,17 +4,35 @@ import Paw from '../types-paw-api/paw'
 import { convertEnvString } from './dynamicStringUtils'
 
 
-const convertRaw = (dynamicString: DynamicString, context: Paw.Context): Postman.Body => {
+const makeContentTypeHeader = (contentType: string): Postman.Header[] => {
+  const pmHeader: Postman.Header = {
+    key: 'Content-Type',
+    value: contentType,
+    disabled: false,
+    description: null,
+  }
+  return [pmHeader]
+}
+
+const convertRaw = (dynamicString: DynamicString, onlyDynamicValue: DynamicValue|null, context: Paw.Context): [Postman.Body, Postman.Header[]] => {
+  // make header
+  let pmHeaders: Postman.Header[] = []
+  if (onlyDynamicValue && onlyDynamicValue.type === 'com.luckymarmot.JSONDynamicValue') {
+    pmHeaders = makeContentTypeHeader('application/json')
+  }
+
+  // make body
   const value = convertEnvString(dynamicString, context)
   const pmBody: Postman.Body = {
     mode: 'raw',
     disabled: false,
     raw: value,
   }
-  return pmBody
+
+  return [pmBody, pmHeaders]
 }
 
-const convertBodyUrlEncoded = (pawUrlEncodedBody: {[key:string]: DynamicString}, context: Paw.Context): Postman.Body => {
+const convertBodyUrlEncoded = (pawUrlEncodedBody: {[key:string]: DynamicString}, context: Paw.Context): [Postman.Body, Postman.Header[]] => {
   const pmParams = Object.entries(pawUrlEncodedBody).map(([key, value]): Postman.BodyUrlEncodedParameter => {
     const pmParam: Postman.BodyUrlEncodedParameter = {
       key: (key || ''),
@@ -29,10 +47,10 @@ const convertBodyUrlEncoded = (pawUrlEncodedBody: {[key:string]: DynamicString},
     disabled: false,
     urlencoded: pmParams,
   }
-  return pmBody
+  return [pmBody, makeContentTypeHeader('application/x-www-form-urlencoded')]
 }
 
-const convertBodyMultipart = (pawMultipartBody: {[key:string]: DynamicString}, context: Paw.Context): Postman.Body => {
+const convertBodyMultipart = (pawMultipartBody: {[key:string]: DynamicString}, context: Paw.Context): [Postman.Body, Postman.Header[]] => {
   const pmParams = Object.entries(pawMultipartBody).map(([key, value]): Postman.BodyFormParameter => {
     // file
     const valueOnlyDv = (value ? value.getOnlyDynamicValue() : null)
@@ -62,10 +80,10 @@ const convertBodyMultipart = (pawMultipartBody: {[key:string]: DynamicString}, c
     disabled: false,
     formdata: pmParams,
   }
-  return pmBody
+  return [pmBody, makeContentTypeHeader('multipart/form-data')]
 }
 
-const convertBodyFile = (pawRequest: Paw.Request): Postman.Body => {
+const convertBodyFile = (pawRequest: Paw.Request): [Postman.Body, Postman.Header[]] => {
   const pmBodyFile: Postman.BodyFile = {
     src: null,
     content: ((pawRequest.body as string|null) || null)
@@ -75,10 +93,10 @@ const convertBodyFile = (pawRequest: Paw.Request): Postman.Body => {
     disabled: false,
     file: pmBodyFile,
   }
-  return pmBody
+  return [pmBody, []]
 }
 
-const convertBody = (pawRequest: Paw.Request, context: Paw.Context): Postman.Body|null => {
+const convertBody = (pawRequest: Paw.Request, context: Paw.Context): [Postman.Body|null, Postman.Header[]] => {
   // URL-Encoded (urlencoded)
   const pawUrlEncodedBody = (pawRequest.getUrlEncodedBody(true) as {[key:string]: DynamicString}|null)
   if (pawUrlEncodedBody) {
@@ -94,7 +112,7 @@ const convertBody = (pawRequest: Paw.Request, context: Paw.Context): Postman.Bod
   // Body as DV
   const pawBody = (pawRequest.getBody(true) as DynamicString|null)
   if (!pawBody) {
-    return null
+    return [null, []]
   }
   const pawBodyDv = pawBody.getOnlyDynamicValue()
 
@@ -104,7 +122,7 @@ const convertBody = (pawRequest: Paw.Request, context: Paw.Context): Postman.Bod
   }
 
   // Raw
-  return convertRaw(pawBody, context)
+  return convertRaw(pawBody, pawBodyDv, context)
 }
 
 export default convertBody
