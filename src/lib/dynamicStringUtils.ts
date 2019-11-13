@@ -27,9 +27,20 @@ const makeFileDv = (): DynamicValue => {
   })
 }
 
-const convertEnvString = (dynamicString: DynamicString): string => {
-  // @TODO
-  return dynamicString.getSimpleString()
+const convertEnvString = (dynamicString: DynamicString, context: Paw.Context): string => {
+  return dynamicString.components.map((component): string => {
+    if (typeof component === 'string') {
+      return component
+    }
+    if (component.type === 'com.luckymarmot.EnvironmentVariableDynamicValue') {
+      const envVarId = (component as any).environmentVariable
+      const envVar = context.getEnvironmentVariableById(envVarId)
+      if (envVar) {
+        return `{{${envVar.name}}}`
+      }
+    }
+    return component.getEvaluatedString()
+  }).join('')
 }
 
 export { makeDv, makeDs, makeEnvDv, makeRequestDv, makeFileDv, convertEnvString }

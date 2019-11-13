@@ -13,12 +13,18 @@ import makeCollection from './lib/makeCollection'
 class PostmanGenerator implements Paw.Generator {
   static identifier = 'com.luckymarmot.PawExtensions.PostmanCollectionGenerator'
   static title = 'Postman Collection Generator'
-  static fileExtension = 'postman_collection.json'
   static languageHighlighter = 'json'
+
+  // @TODO change later to 'postman_collection.json'
+  // there's currently a bug in Paw that prevents file extensions to be
+  // with multiple components
+  static fileExtension = 'json'
 
   context: Paw.Context
 
   public generate(context: Paw.Context, requests: Paw.Request[], options: Paw.ExtensionOption): string {
+    this.context = context
+
     let items: Postman.Item[]
     if (context.runtimeInfo.task === 'exportAllRequests') {
       items = this.convertItems(context.getRootRequestTreeItems())
@@ -54,11 +60,11 @@ class PostmanGenerator implements Paw.Generator {
 
   private convertRequest(pawRequest: Paw.Request): Postman.Item {
     const pmUrl: Postman.Url = {
-      raw: convertEnvString(pawRequest.getUrl(true) as DynamicString),
+      raw: convertEnvString(pawRequest.getUrl(true) as DynamicString, this.context),
       query: null,
     }
     const pmRequest: Postman.Request = {
-      method: convertEnvString(pawRequest.getMethod(true) as DynamicString),
+      method: (pawRequest.getMethod(false) as string),
       url: pmUrl,
       description: pawRequest.description,
       header: [], // @TODO

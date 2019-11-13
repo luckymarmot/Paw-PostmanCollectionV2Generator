@@ -351,7 +351,7 @@ export interface ExtensionItem {
 }
 
 export interface ExtensionInput {
-    // @TODO
+    // @TODO definition not finished
 }
 
 export interface Generator {
