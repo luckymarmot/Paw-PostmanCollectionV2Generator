@@ -64,12 +64,13 @@ class PostmanGenerator implements Paw.Generator {
       query: null, // @TODO
     }
     const pmHeaders = convertHeaders(pawRequest, this.context)
+    const pmBody = convertBody(pawRequest, this.context)
     const pmRequest: Postman.Request = {
       method: (pawRequest.getMethod(false) as string),
       url: pmUrl,
       description: pawRequest.description,
       header: pmHeaders,
-      body: null, // @TODO
+      body: pmBody,
       auth: null, // @TODO
     }
     const pmOptions: Postman.ProtocolProfileBehavior = {

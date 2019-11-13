@@ -1,90 +1,110 @@
 /* eslint-disable no-param-reassign */
 import Postman from '../types-paw-api/postman'
 import Paw from '../types-paw-api/paw'
-import { getPostmanHeader } from './postmanUtils'
-import { makeDs, makeFileDv } from './dynamicStringUtils'
-import EnvironmentManager from './EnvironmentManager'
-import convertEnvString from './convertEnvString'
+import { convertEnvString } from './dynamicStringUtils'
 
 
-const convertRaw = (pmBody: Postman.Body, pmRequest: Postman.Request, pawRequest: Paw.Request, environmentManager: EnvironmentManager): void => {
-  if (!pmBody.raw || typeof pmBody.raw !== 'string') {
-    return
+const convertRaw = (dynamicString: DynamicString, context: Paw.Context): Postman.Body => {
+  const value = convertEnvString(dynamicString, context)
+  const pmBody: Postman.Body = {
+    mode: 'raw',
+    disabled: false,
+    raw: value,
   }
-
-  // convert body (with environment variables)
-  const str = convertEnvString(pmBody.raw, environmentManager)
-
-  // if type is JSON (and if there are no environment variables), set a JSON Body in Paw
-  const contentTypeHeader = getPostmanHeader(pmRequest, 'content-type')
-  if (contentTypeHeader &&
-      contentTypeHeader.value &&
-      contentTypeHeader.value.match(/^application\/json/) &&
-      typeof str === 'string') {
-    try {
-      const json = JSON.parse(pmBody.raw)
-      pawRequest.jsonBody = json
-      return
-    } catch (error) {
-      // no op
-    }
-  }
-
-  pawRequest.body = str
+  return pmBody
 }
 
-const convertBodyUrlEncoded = (pmBody: Postman.Body, pmRequest: Postman.Request, pawRequest: Paw.Request, environmentManager: EnvironmentManager): void => {
-  if (!pmBody.urlencoded || !Array.isArray(pmBody.urlencoded)) {
-    return
-  }
-  const pawParams: { [key:string]: string|DynamicString } = {}
-    pmBody.urlencoded.forEach((pmParam) => {
-      const key: string = (pmParam.key || '')
-      const value: string = (pmParam.value || '')
-      pawParams[key] = convertEnvString(value, environmentManager)
-    })
-    pawRequest.urlEncodedBody = pawParams
-}
-
-const convertBodyMultipart = (pmBody: Postman.Body, pmRequest: Postman.Request, pawRequest: Paw.Request, environmentManager: EnvironmentManager): void => {
-  if (!pmBody.formdata || !Array.isArray(pmBody.formdata)) {
-    return
-  }
-  const pawParams: { [key:string]: string|DynamicString } = {}
-  pmBody.formdata.forEach((pmParam) => {
-    const key: string = (pmParam.key || '')
-    if (pmParam.type === 'file') {
-      pawParams[key] = makeDs(makeFileDv())
+const convertBodyUrlEncoded = (pawUrlEncodedBody: {[key:string]: DynamicString}, context: Paw.Context): Postman.Body => {
+  const pmParams = Object.entries(pawUrlEncodedBody).map(([key, value]): Postman.BodyUrlEncodedParameter => {
+    const pmParam: Postman.BodyUrlEncodedParameter = {
+      key: (key || ''),
+      value: convertEnvString(value, context),
+      disabled: false,
+      description: null,
     }
-    else {
-      const value: string = (pmParam.value || '')
-      pawParams[key] = convertEnvString(value, environmentManager)
-    }
+    return pmParam
   })
-  pawRequest.multipartBody = pawParams
+  const pmBody: Postman.Body = {
+    mode: 'urlencoded',
+    disabled: false,
+    urlencoded: pmParams,
+  }
+  return pmBody
 }
 
-const convertBodyFile = (pmBody: Postman.Body, pmRequest: Postman.Request, pawRequest: Paw.Request): void => {
-  pawRequest.body = makeDs(makeFileDv())
+const convertBodyMultipart = (pawMultipartBody: {[key:string]: DynamicString}, context: Paw.Context): Postman.Body => {
+  const pmParams = Object.entries(pawMultipartBody).map(([key, value]): Postman.BodyFormParameter => {
+    // file
+    const valueOnlyDv = (value ? value.getOnlyDynamicValue() : null)
+    if (valueOnlyDv && valueOnlyDv.type === 'com.luckymarmot.FileContentDynamicValue') {
+      const pmParam: Postman.BodyFormParameter = {
+        key: (key || ''),
+        disabled: false,
+        type: 'file',
+        description: null,
+        src: null,
+      }
+      return pmParam
+    }
+
+    // string/text
+    const pmParam: Postman.BodyFormParameter = {
+      key: (key || ''),
+      value: convertEnvString(value, context),
+      disabled: false,
+      type: 'text',
+      description: null,
+    }
+    return pmParam
+  })
+  const pmBody: Postman.Body = {
+    mode: 'formdata',
+    disabled: false,
+    formdata: pmParams,
+  }
+  return pmBody
 }
 
-const convertBody = (pmRequest: Postman.Request, pawRequest: Paw.Request, environmentManager: EnvironmentManager): void => {
-  const pmBody = pmRequest.body
-  if (!pmBody) {
-    return
+const convertBodyFile = (pawRequest: Paw.Request): Postman.Body => {
+  const pmBodyFile: Postman.BodyFile = {
+    src: null,
+    content: ((pawRequest.body as string|null) || null)
   }
-  if (pmBody.mode === 'raw') {
-    convertRaw(pmBody, pmRequest, pawRequest, environmentManager)
+  const pmBody: Postman.Body = {
+    mode: 'file',
+    disabled: false,
+    file: pmBodyFile,
   }
-  if (pmBody.mode === 'urlencoded') {
-    convertBodyUrlEncoded(pmBody, pmRequest, pawRequest, environmentManager)
+  return pmBody
+}
+
+const convertBody = (pawRequest: Paw.Request, context: Paw.Context): Postman.Body|null => {
+  // URL-Encoded (urlencoded)
+  const pawUrlEncodedBody = (pawRequest.getUrlEncodedBody(true) as {[key:string]: DynamicString}|null)
+  if (pawUrlEncodedBody) {
+    return convertBodyUrlEncoded(pawUrlEncodedBody, context)
   }
-  if (pmBody.mode === 'formdata') {
-    convertBodyMultipart(pmBody, pmRequest, pawRequest, environmentManager)
+
+  // Multipart (formdata)
+  const pawMultipartBody = (pawRequest.getMultipartBody(true) as {[key:string]: DynamicString}|null)
+  if (pawMultipartBody) {
+    return convertBodyMultipart(pawMultipartBody, context)
   }
-  if (pmBody.mode === 'file') {
-    convertBodyFile(pmBody, pmRequest, pawRequest)
+
+  // Body as DV
+  const pawBody = (pawRequest.getBody(true) as DynamicString|null)
+  if (!pawBody) {
+    return null
   }
+  const pawBodyDv = pawBody.getOnlyDynamicValue()
+
+  // File
+  if (pawBodyDv && pawBodyDv.type === 'com.luckymarmot.FileContentDynamicValue') {
+    return convertBodyFile(pawRequest)
+  }
+
+  // Raw
+  return convertRaw(pawBody, context)
 }
 
 export default convertBody

@@ -78,11 +78,12 @@ export interface BodyUrlEncodedParameter {
 
 export interface BodyFormParameter {
     key: string|null
-    value: string|null
+    value?: string|null
     disabled: boolean
     type: string|null
-    contentType: string|null
     description: string|null
+    contentType?: string|null
+    src?: string|null
 }
 
 export interface BodyFile {
@@ -92,12 +93,12 @@ export interface BodyFile {
 
 export interface Body {
     mode: string
-    raw: string|null
     disabled: boolean
-    urlencoded: BodyUrlEncodedParameter[]|null
-    formdata: BodyFormParameter[]|null
-    file: BodyFile
-    graphql: any
+    raw?: string|null
+    urlencoded?: BodyUrlEncodedParameter[]|null
+    formdata?: BodyFormParameter[]|null
+    file?: BodyFile
+    graphql?: any
 }
 
 export interface AuthKeyValue {
