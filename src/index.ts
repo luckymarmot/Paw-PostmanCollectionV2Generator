@@ -1,6 +1,7 @@
 /* eslint-disable class-methods-use-this */
 import Paw from './types-paw-api/paw'
 import Postman from './types-paw-api/postman'
+import convertUrl from './lib/convertUrl'
 import convertBody from './lib/convertBody'
 import convertHeaders from './lib/convertHeaders'
 import convertAuth from './lib/convertAuth'
@@ -59,10 +60,7 @@ class PostmanGenerator implements Paw.Generator {
 
   private convertRequest(pawRequest: Paw.Request): Postman.Item {
     // url
-    const pmUrl: Postman.Url = {
-      raw: convertEnvString(pawRequest.getUrl(true) as DynamicString, this.context),
-      query: null, // @TODO
-    }
+    const pmUrl = convertUrl(pawRequest, this.context)
 
     // body
     let [pmBody, pmBodyExtraHeaders] = convertBody(pawRequest, this.context)

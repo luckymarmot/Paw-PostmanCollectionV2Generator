@@ -54,12 +54,19 @@ export interface Request {
 export interface UrlQueryParam {
     key: string|null
     value: string|null
+    disabled: boolean|null
     description: string|null
 }
 
 export interface Url {
     raw: string|null
-    query: UrlQueryParam[]|null
+    protocol?: string|null
+    host?: string|string[]|null
+    port?: string|null
+    path?: string|string[]|null
+    query?: UrlQueryParam[]|null
+    hash?: string|null
+    variable?: any
 }
 
 export interface Header {
