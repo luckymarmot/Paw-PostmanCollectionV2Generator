@@ -1,7 +1,7 @@
 /* eslint-disable no-param-reassign */
 import Postman from '../types-paw-api/postman'
 import Paw from '../types-paw-api/paw'
-import { convertEnvString } from './dynamicStringUtils'
+import convertEnvString from './convertEnvString'
 
 
 const convertHeader = (pawHeader: Paw.KeyValue, pawRequest: Paw.Request, context: Paw.Context): Postman.Header => {

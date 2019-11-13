@@ -4,7 +4,7 @@ import Postman from './types-paw-api/postman'
 import convertBody from './lib/convertBody'
 import convertHeaders from './lib/convertHeaders'
 import convertAuth from './lib/convertAuth'
-import { convertEnvString } from './lib/dynamicStringUtils'
+import convertEnvString from './lib/convertEnvString'
 import makeCollection from './lib/makeCollection'
 
 
@@ -20,6 +20,7 @@ class PostmanGenerator implements Paw.Generator {
 
   context: Paw.Context
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public generate(context: Paw.Context, requests: Paw.Request[], options: Paw.ExtensionOption): string {
     this.context = context
 
