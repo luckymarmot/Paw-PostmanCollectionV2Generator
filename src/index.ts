@@ -4,8 +4,6 @@ import Postman from './types-paw-api/postman'
 import convertBody from './lib/convertBody'
 import convertHeaders from './lib/convertHeaders'
 import convertAuth from './lib/convertAuth'
-import convertUrl, { convertUrlParams } from './lib/convertUrl'
-import EnvironmentManager from './lib/EnvironmentManager'
 import { convertEnvString } from './lib/dynamicStringUtils'
 import makeCollection from './lib/makeCollection'
 
