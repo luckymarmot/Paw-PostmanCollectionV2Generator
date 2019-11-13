@@ -66,13 +66,23 @@ class PostmanGenerator implements Paw.Generator {
     // body
     let [pmBody, pmBodyExtraHeaders] = convertBody(pawRequest, this.context)
 
+    // auth
+    const pmAuth = convertAuth(pawRequest, this.context)
+
     // header
-    const pmHeaders = convertHeaders(pawRequest, this.context)
+    let pmHeaders = convertHeaders(pawRequest, this.context)
     const hasContentTypeHeader = pmHeaders.reduce((acc, pmHeader) => {
       return acc || (pmHeader.key && pmHeader.key.trim().toLowerCase() === 'content-type')
     }, false)
     if (hasContentTypeHeader) {
       pmBodyExtraHeaders = []
+    }
+
+    // filter out `Authorization` header
+    if (pmAuth) {
+      pmHeaders = pmHeaders.filter((header) => {
+        return (!header.key || header.key.trim().toLowerCase() !== 'authorization')
+      })
     }
 
     const pmRequest: Postman.Request = {
@@ -81,7 +91,7 @@ class PostmanGenerator implements Paw.Generator {
       description: pawRequest.description,
       header: (pmBodyExtraHeaders || []).concat(pmHeaders),
       body: pmBody,
-      auth: null, // @TODO
+      auth: pmAuth,
     }
     const pmOptions: Postman.ProtocolProfileBehavior = {
       followRedirects: pawRequest.followRedirects,
