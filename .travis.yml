@@ -2,10 +2,22 @@ language: node_js
 cache:
   yarn: true
   directories:
-    - node_modules
+  - node_modules
 env:
-  - TEST_CMD=build
-  - TEST_CMD=tsc
-  - TEST_CMD=test
+- TEST_CMD=build
+- TEST_CMD=tsc
+- TEST_CMD=test
 script:
-  - yarn run ${TEST_CMD}
+- yarn run ${TEST_CMD}
+before_deploy:
+- yarn run archive
+deploy:
+  provider: releases
+  api_key:
+    secure: VoF+Z7Fi85P3Pj9E//hMk7qH6+4nCgG29UJkSikApDzjJ+USRog8AD26F24caWXZuUsBNkV/2NVGLDdDfuq5ld7b/0/oPMApwg2dpB0znZWOSvIqUmDlGN5z3ml7+hNIpRUnbDN5LcUKbbxhtfYCCHV8USxOHe5mZ/UeJPg4Wh48gBL7e5uLTvS3kmTQTblSTuLg6YWopD/FJIIpaBa1MXnH1axDiMqEBRncSnbAF2TRXnCTuW91kNbgAQxwUluUVBAaVCatKKsDfwFUBf47ZDSz3NYMRzrCPZ3U0tWCMAspPFrPqUNQNj5XXYbijMa1R3mXgv6uq37gY6QVxa6TEMujgAyczO98eZgpjNw19yf+yDqQvFq51KKDRxj5BPYEypGuY6TIrVRV2EAGHPIi2bKCkXJid3flB4s3+/xvAy5MCYN1OmgoF3P9EpJqEx/HiGZ10qSMyvVZMPe75WO5dh0nrC3CJpvZIvVN2mNQB4ikAslEyYgDtZINyzm1XZOoUJmbSl2JsmVNefE23rLYZ19QcNG8JLKxwX84ZeH4/EizTci9g9r9AaeUzs1ZS7TC1RVhbkceyXkINVZE3MMPg1YEuvLMqUHfBKBw6lYMS/5kauzpYUU1k6dG8+UELQPmE4mganJ39pMxY91IRFhehBmEiw/efpHWzZ2f1MHIk2Y=
+  file: dist/PostmanCollectionGenerator.zip
+  skip_cleanup: true
+  on:
+    tags: true
+    all_branches: true
+    repo: luckymarmot/Paw-PostmanCollectionV2Generator
